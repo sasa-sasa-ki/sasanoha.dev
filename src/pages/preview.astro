@@ -2,6 +2,10 @@
 import PreviewPanel from "../components/PreviewPanel.vue";
 import "../styles/global.scss";
 
+const actionEndpoint = import.meta.env.PROD
+  ? "/admin/api/items/reference-work/action"
+  : undefined;
+
 const work = {
   description: "公開前の制作物",
   producedAt: "2026-09-18",
@@ -45,7 +49,8 @@ const work = {
       producedAt={work.producedAt}
       createdAt={work.createdAt}
       publishAt={work.publishAt}
-      referenceMode={true}
+      actionEndpoint={actionEndpoint}
+      referenceMode={!actionEndpoint}
     />
   </body>
 </html>

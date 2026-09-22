@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 import {
+  loadPreviewStatus,
   nextPreviewStatus,
   sendPreviewAction,
   type PreviewAction,
@@ -21,6 +22,7 @@ const open = ref(false);
 const currentStatus = ref<PreviewStatus>(props.status);
 const pending = ref(false);
 const message = ref("");
+const loading = ref(Boolean(props.actionEndpoint));
 
 const labels = {
   draft: "下書き",
@@ -40,8 +42,27 @@ const displayedPublishAt = computed(
       : "未設定",
 );
 
+onMounted(async () => {
+  if (!props.actionEndpoint) {
+    loading.value = false;
+    return;
+  }
+
+  try {
+    const result = await loadPreviewStatus(props.actionEndpoint);
+    currentStatus.value = result.status;
+  } catch (error) {
+    message.value =
+      error instanceof Error
+        ? `CMS状態の取得に失敗しました: ${error.message}`
+        : "CMS状態の取得に失敗しました。";
+  } finally {
+    loading.value = false;
+  }
+});
+
 async function runAction(action: PreviewAction): Promise<void> {
-  if (!actionsEnabled.value || pending.value) return;
+  if (!actionsEnabled.value || pending.value || loading.value) return;
 
   pending.value = true;
   message.value = "";
@@ -109,14 +130,14 @@ async function runAction(action: PreviewAction): Promise<void> {
     <div class="actions">
       <button
         type="button"
-        :disabled="!actionsEnabled || pending"
+        :disabled="!actionsEnabled || pending || loading"
         @click="runAction('publish')"
       >
         今すぐ公開
       </button>
       <button
         type="button"
-        :disabled="!actionsEnabled || pending"
+        :disabled="!actionsEnabled || pending || loading"
         @click="runAction('draft')"
       >
         下書きへ戻す
@@ -124,7 +145,7 @@ async function runAction(action: PreviewAction): Promise<void> {
       <button
         class="danger"
         type="button"
-        :disabled="!actionsEnabled || pending"
+        :disabled="!actionsEnabled || pending || loading"
         @click="runAction('archive')"
       >
         保管する
@@ -137,7 +158,7 @@ async function runAction(action: PreviewAction): Promise<void> {
 
     <p class="note">
       <template v-if="props.actionEndpoint">
-        CMS APIへ接続しています。
+        {{ loading ? "CMS APIから状態を読み込んでいます。" : "CMS APIへ接続しています。" }}
       </template>
       <template v-else-if="props.referenceMode">
         現在はreference modeです。操作は永続化せず、API接続時も同じaction語彙を利用します。

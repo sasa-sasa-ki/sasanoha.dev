@@ -1,0 +1,3 @@
+# Local-only authorization allowlist for the API Worker.
+# Copy to .dev.vars and replace with your own Access identity email.
+EDITOR_EMAILS=developer@example.invalid

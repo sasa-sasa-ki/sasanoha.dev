@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  loadPreviewStatus,
   nextPreviewStatus,
   sendPreviewAction,
 } from "../src/lib/preview-action.ts";
@@ -10,6 +11,24 @@ test("reference preview actions follow the CMS action vocabulary", () => {
   assert.equal(nextPreviewStatus("scheduled", "publish"), "published");
   assert.equal(nextPreviewStatus("published", "draft"), "draft");
   assert.equal(nextPreviewStatus("draft", "archive"), "archived");
+});
+
+test("API preview status loads persisted state", async () => {
+  const result = await loadPreviewStatus(
+    "/admin/api/items/reference-work/action",
+    async (_input, init) => {
+      assert.equal(init?.method, "GET");
+      return new Response(
+        JSON.stringify({ status: "scheduled" }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        },
+      );
+    },
+  );
+
+  assert.equal(result.status, "scheduled");
 });
 
 test("API preview action uses JSON contract and trusts returned status", async () => {
