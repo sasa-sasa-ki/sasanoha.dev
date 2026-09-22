@@ -1,14 +1,5 @@
 ---
-import PreviewPanel from "../components/PreviewPanel.vue";
 import "../styles/global.scss";
-
-const configuredActionEndpoint =
-  import.meta.env.PUBLIC_SASANOHA_ACTION_ENDPOINT;
-const actionEndpoint =
-  typeof configuredActionEndpoint === "string"
-  && configuredActionEndpoint.trim()
-    ? configuredActionEndpoint.trim()
-    : undefined;
 
 const work = {
   description: "公開前の制作物",
@@ -40,21 +31,13 @@ const work = {
 
       <section>
         <article class="card">
-          <strong>{work.description}</strong>
-          <p>制作日時: {work.producedAt}</p>
+          <strong data-sasanoha-bind="description">{work.description}</strong>
+          <p>制作日時: <span data-sasanoha-bind="producedAt">{work.producedAt}</span></p>
           <p class="meta">公開前のdraft / scheduled data</p>
         </article>
       </section>
     </main>
 
-    <PreviewPanel
-      client:load
-      status={work.status}
-      producedAt={work.producedAt}
-      createdAt={work.createdAt}
-      publishAt={work.publishAt}
-      actionEndpoint={actionEndpoint}
-      referenceMode={!actionEndpoint}
-    />
+    <script is:inline src="/admin/preview/overlay.js"></script>
   </body>
 </html>
