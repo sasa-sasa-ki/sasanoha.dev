@@ -8,9 +8,11 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "check": "astro check",
+    "check": "astro check && npm test",
+    "test": "node --test test/*.test.ts",
     "build": "npm run check && astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy:dry-run": "npm run build && wrangler deploy --dry-run"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
     "@types/node": "^24.13.5",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.130.0"
   }
 }
