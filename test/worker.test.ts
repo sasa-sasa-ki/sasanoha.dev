@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   assetPathForRequest,
   handleRequest,
-  isAdminApiPath,
+  isAdminPath,
   isPublicPreviewPath,
   PREVIEW_HOST,
 } from "../worker/index.ts";
@@ -51,7 +51,7 @@ test("public hostname blocks the internal preview asset path", () => {
 
 test("admin API paths are recognized before preview asset routing", () => {
   assert.equal(
-    isAdminApiPath(
+    isAdminPath(
       new URL(
         "https://preview.sasanoha.dev/admin/api/items/reference-work/action",
       ),
@@ -60,31 +60,28 @@ test("admin API paths are recognized before preview asset routing", () => {
   );
 });
 
-test("public hostname never reaches the CMS service binding", async () => {
+test("public admin path reaches the protected CMS service binding", async () => {
   let calls = 0;
 
   const response = await handleRequest(
-    new Request(
-      "https://sasanoha.dev/admin/api/items/reference-work/action",
-      { method: "POST" },
-    ),
+    new Request("https://sasanoha.dev/admin/panel"),
     {
       ASSETS: {
         async fetch() {
           return new Response("asset");
         },
       },
-      CMS_API: {
+      CMS: {
         async fetch() {
           calls += 1;
-          return new Response("cms");
+          return new Response("access required", { status: 403 });
         },
       },
     },
   );
 
-  assert.equal(response.status, 404);
-  assert.equal(calls, 0);
+  assert.equal(response.status, 403);
+  assert.equal(calls, 1);
 });
 
 test("preview hostname forwards admin API to the CMS service binding", async () => {
@@ -101,7 +98,7 @@ test("preview hostname forwards admin API to the CMS service binding", async () 
           return new Response("asset");
         },
       },
-      CMS_API: {
+      CMS: {
         async fetch(input) {
           const url =
             input instanceof Request
@@ -121,7 +118,7 @@ test("preview hostname forwards admin API to the CMS service binding", async () 
   );
 });
 
-test("preview admin API fails closed until service binding exists", async () => {
+test("preview admin path fails closed until service binding exists", async () => {
   const response = await handleRequest(
     new Request(
       "https://preview.sasanoha.dev/admin/api/items/reference-work/action",
