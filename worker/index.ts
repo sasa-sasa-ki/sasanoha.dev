@@ -8,18 +8,23 @@ type Env = {
 
 export const PREVIEW_HOST = "preview.sasanoha.dev";
 
+function looksLikeStaticAsset(pathname: string): boolean {
+  return pathname.startsWith("/_astro/")
+    || /\.[a-z0-9]+$/i.test(pathname);
+}
+
 /**
  * preview hostnameでは通常の公開indexではなくpreview pageを返します。
  *
  * @remarks
- * Astroの/_astro assetsは同じpathをそのまま利用します。
+ * Astro bundleや画像等のstatic assetは同じpathをそのまま利用します。
  */
 export function assetPathForRequest(url: URL): string {
   if (url.hostname !== PREVIEW_HOST) {
     return url.pathname;
   }
 
-  if (url.pathname.startsWith("/_astro/")) {
+  if (looksLikeStaticAsset(url.pathname)) {
     return url.pathname;
   }
 
@@ -39,8 +44,6 @@ export default {
     assetUrl.hostname = "assets.local";
     assetUrl.pathname = assetPath;
 
-    return env.ASSETS.fetch(
-      new Request(assetUrl, request),
-    );
+    return env.ASSETS.fetch(assetUrl);
   },
 };
