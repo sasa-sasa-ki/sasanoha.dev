@@ -27,10 +27,5 @@
         "name": "Local Developer"
       }
     }
-  },
-  "secrets": {
-    "required": [
-      "EDITOR_EMAILS"
-    ]
   }
 }
