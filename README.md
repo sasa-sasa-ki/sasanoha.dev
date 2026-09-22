@@ -22,7 +22,9 @@ sasanohaCMSの公開reference / experimental siteです。
 npx @sasanoha/cms init
 ```
 
-それまでは `/experiment/` で公開側のitem表示だけをfixtureとして確認します。
+それまでは `/experiment/` で公開側のitem表示、`/preview/` で下書きpreview UIをfixtureとして確認します。
+
+previewのproduction想定は `https://preview.sasanoha.dev/` です。Workerはhostnameを見てpreview assetへ切り替えますが、preview hostnameはCloudflare Accessで保護してからCustom Domainへ追加します。
 
 ## 開発
 
