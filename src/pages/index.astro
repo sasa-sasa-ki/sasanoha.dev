@@ -1,0 +1,47 @@
+---
+import ExperimentStatus from "../components/ExperimentStatus.vue";
+import "../styles/global.scss";
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta
+      name="description"
+      content="sasanoha.dev — sasanohaCMSとWeb制作のreference / experimental site"
+    />
+    <title>sasanoha.dev</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="meta">reference / experimental site</p>
+        <h1>sasanoha.dev</h1>
+        <p class="lead">
+          sasanohaCMSを、実案件へ持ち込む前に小さく試すための公開実験サイトです。
+          現在はサイト骨格のみで、CMS package公開後にここから導入検証を始めます。
+        </p>
+      </header>
+
+      <section>
+        <ExperimentStatus client:load phase="reference skeleton" cmsConnected={false} />
+      </section>
+
+      <section>
+        <h2>実験</h2>
+        <div class="card-grid">
+          <a class="card" href="/experiment/">
+            <strong>アイテム表示実験</strong>
+            <p>制作日時とCMS上の日時を分ける、最小の公開側表示を確認します。</p>
+          </a>
+          <div class="card">
+            <strong>Preview UI</strong>
+            <p>preview hostname専用です。public hostnameからは直接到達できません。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

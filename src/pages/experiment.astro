@@ -1,0 +1,53 @@
+---
+import "../styles/global.scss";
+
+const works = [
+  {
+    description: "新しい制作物",
+    producedAt: "2026-08-20",
+    createdAt: "2026-09-22T11:00:00+09:00",
+  },
+  {
+    description: "古い制作物",
+    producedAt: "2025-12-01",
+    createdAt: "2026-09-22T12:00:00+09:00",
+  },
+].sort((left, right) => right.producedAt.localeCompare(left.producedAt));
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>アイテム表示実験 | sasanoha.dev</title>
+  </head>
+  <body>
+    <main>
+      <p><a href="/">← sasanoha.dev</a></p>
+      <p class="meta">package connection pending</p>
+      <h1>アイテム表示実験</h1>
+      <p class="lead">
+        まだ @sasanoha/cms は接続していません。
+        public package化後にこのfixtureを実際のCMS出力へ置き換えます。
+      </p>
+
+      <section>
+        <h2>作品</h2>
+        <p>制作日時の新しい順。CMSへ登録した日時とは独立しています。</p>
+
+        <div class="card-grid">
+          {
+            works.map((work) => (
+              <article class="card">
+                <strong>{work.description}</strong>
+                <p>制作日時: {work.producedAt}</p>
+                <p class="meta">CMS作成日時: {work.createdAt}</p>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
