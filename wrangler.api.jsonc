@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "sasanoha-dev-cms-api",
+  "compatibility_date": "2026-09-22",
+  "main": "./worker/api/index.ts",
+  "workers_dev": false,
+  "routes": [
+    {
+      "pattern": "preview.sasanoha.dev/admin/api/*",
+      "zone_name": "sasanoha.dev"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "CMS_DB",
+      "database_name": "sasanoha-dev-cms",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "preview_database_id": "sasanoha-dev-cms-local",
+      "migrations_dir": "worker/api/migrations"
+    }
+  ],
+  "access": {
+    "dev": {
+      "aud": "sasanoha-dev-local",
+      "identity": {
+        "email": "developer@example.invalid",
+        "name": "Local Developer"
+      }
+    }
+  }
+}
