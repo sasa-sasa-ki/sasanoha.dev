@@ -24,7 +24,9 @@ npx @sasanoha/cms init
 
 それまでは `/experiment/` で公開側のitem表示、`/preview/` で下書きpreview UIをfixtureとして確認します。
 
-previewのproduction想定は `https://preview.sasanoha.dev/` です。Workerはhostnameを見てpreview assetへ切り替えますが、preview hostnameはCloudflare Accessで保護してからCustom Domainへ追加します。
+previewのproduction想定は `https://preview.sasanoha.dev/` です。Workerはhostnameを見てpreview assetへ切り替え、`/admin/api/*` だけをsasanohaCMSの専用API WorkerへService Bindingで転送できる構成です。
+
+API未接続時はPreviewPanelがreference modeへ戻るため、公開referenceのUI検証を継続できます。preview hostnameはCloudflare Accessで保護してからCustom Domainへ追加します。public hostnameでは `/preview/*` と `/admin/api/*` を404で遮断します。
 
 ## 開発
 
