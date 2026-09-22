@@ -12,8 +12,8 @@
   },
   "services": [
     {
-      "binding": "CMS_API",
-      "service": "sasanoha-cms-api"
+      "binding": "CMS",
+      "service": "sasanoha-cms"
     }
   ],
   "routes": [
