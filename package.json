@@ -8,11 +8,16 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "check": "astro check && npm test",
+    "check": "astro check && npm test && npm run check:api",
     "test": "node --test test/*.test.ts",
     "build": "npm run check && astro build",
     "preview": "astro preview",
-    "deploy:dry-run": "npm run build && wrangler deploy --dry-run"
+    "deploy:dry-run": "npm run build && wrangler deploy --dry-run --config wrangler.jsonc",
+    "check:api": "wrangler deploy --dry-run --config wrangler.api.jsonc",
+    "db:local:migrate": "wrangler d1 migrations apply CMS_DB --local --config wrangler.api.jsonc",
+    "db:local:smoke": "wrangler d1 execute CMS_DB --local --config wrangler.api.jsonc --command \"SELECT id, status, revision FROM cms_items WHERE id = 'reference-work';\"",
+    "dev:api": "wrangler dev --config wrangler.api.jsonc --port 8788",
+    "deploy:api": "wrangler deploy --config wrangler.api.jsonc"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
