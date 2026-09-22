@@ -12,7 +12,8 @@
     "test": "node --test test/*.test.ts",
     "build": "npm run check && astro build",
     "preview": "astro preview",
-    "deploy:dry-run": "npm run build && wrangler deploy --dry-run"
+    "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
+    "smoke:preview": "node scripts/smoke-preview.mjs"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
