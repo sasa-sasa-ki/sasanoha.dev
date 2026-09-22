@@ -4,6 +4,7 @@ type AssetBinding = {
 
 type Env = {
   ASSETS: AssetBinding;
+  PREVIEW_ENABLED?: string;
 };
 
 export const PREVIEW_HOST = "preview.sasanoha.dev";
@@ -19,6 +20,13 @@ export function isPublicPreviewPath(url: URL): boolean {
       url.pathname === "/preview"
       || url.pathname.startsWith("/preview/")
     );
+}
+
+export function isPreviewHostEnabled(
+  url: URL,
+  previewEnabled: string | undefined,
+): boolean {
+  return url.hostname !== PREVIEW_HOST || previewEnabled === "true";
 }
 
 /**
@@ -39,6 +47,16 @@ export function assetPathForRequest(url: URL): string {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (!isPreviewHostEnabled(url, env.PREVIEW_ENABLED)) {
+      return new Response("Not Found", {
+        status: 404,
+        headers: {
+          "cache-control": "no-store",
+          "x-robots-tag": "noindex, nofollow",
+        },
+      });
+    }
 
     if (isPublicPreviewPath(url)) {
       return new Response("Not Found", {
