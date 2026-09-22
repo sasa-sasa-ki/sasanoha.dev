@@ -1,16 +1,34 @@
-type AssetBinding = {
+type FetchBinding = {
   fetch(input: Request | URL | string): Promise<Response>;
 };
 
 type Env = {
-  ASSETS: AssetBinding;
+  ASSETS: FetchBinding;
+  CMS_API?: FetchBinding;
 };
 
 export const PREVIEW_HOST = "preview.sasanoha.dev";
 
+function noStoreResponse(
+  body: string,
+  status: number,
+): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      "cache-control": "no-store",
+    },
+  });
+}
+
 function looksLikeStaticAsset(pathname: string): boolean {
   return pathname.startsWith("/_astro/")
     || /\.[a-z0-9]+$/i.test(pathname);
+}
+
+export function isAdminApiPath(url: URL): boolean {
+  return url.pathname === "/admin/api"
+    || url.pathname.startsWith("/admin/api/");
 }
 
 export function isPublicPreviewPath(url: URL): boolean {
@@ -36,29 +54,41 @@ export function assetPathForRequest(url: URL): string {
   return "/preview/";
 }
 
+export async function handleRequest(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  const url = new URL(request.url);
+
+  if (isAdminApiPath(url)) {
+    if (url.hostname !== PREVIEW_HOST) {
+      return noStoreResponse("Not Found", 404);
+    }
+
+    if (!env.CMS_API) {
+      return noStoreResponse("CMS API unavailable", 503);
+    }
+
+    return env.CMS_API.fetch(request);
+  }
+
+  if (isPublicPreviewPath(url)) {
+    return noStoreResponse("Not Found", 404);
+  }
+
+  const assetPath = assetPathForRequest(url);
+
+  if (assetPath === url.pathname) {
+    return env.ASSETS.fetch(request);
+  }
+
+  const assetUrl = new URL(request.url);
+  assetUrl.hostname = "assets.local";
+  assetUrl.pathname = assetPath;
+
+  return env.ASSETS.fetch(assetUrl);
+}
+
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (isPublicPreviewPath(url)) {
-      return new Response("Not Found", {
-        status: 404,
-        headers: {
-          "cache-control": "no-store",
-        },
-      });
-    }
-
-    const assetPath = assetPathForRequest(url);
-
-    if (assetPath === url.pathname) {
-      return env.ASSETS.fetch(request);
-    }
-
-    const assetUrl = new URL(request.url);
-    assetUrl.hostname = "assets.local";
-    assetUrl.pathname = assetPath;
-
-    return env.ASSETS.fetch(assetUrl);
-  },
+  fetch: handleRequest,
 };
