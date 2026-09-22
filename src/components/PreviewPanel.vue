@@ -115,9 +115,7 @@ async function runAction(action: PreviewAction): Promise<void> {
     }
 
     currentStatus.value = nextPreviewStatus(currentStatus.value, action);
-    if (action !== "scheduled") {
-      currentPublishAt.value = undefined;
-    }
+    currentPublishAt.value = undefined;
     message.value =
       "reference modeのため、この画面上だけで状態を切り替えています。再読み込みすると戻ります。";
   } catch (error) {
