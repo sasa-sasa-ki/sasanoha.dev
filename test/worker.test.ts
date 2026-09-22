@@ -103,7 +103,11 @@ test("preview hostname forwards admin API to the CMS service binding", async () 
       },
       CMS_API: {
         async fetch(input) {
-          pathname = new URL(String(input)).pathname;
+          const url =
+            input instanceof Request
+              ? new URL(input.url)
+              : new URL(String(input));
+          pathname = url.pathname;
           return Response.json({ status: "published" });
         },
       },
