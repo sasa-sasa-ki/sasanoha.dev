@@ -4,7 +4,7 @@ type FetchBinding = {
 
 type Env = {
   ASSETS: FetchBinding;
-  CMS_API?: FetchBinding;
+  CMS?: FetchBinding;
 };
 
 export const PREVIEW_HOST = "preview.sasanoha.dev";
@@ -26,9 +26,9 @@ function looksLikeStaticAsset(pathname: string): boolean {
     || /\.[a-z0-9]+$/i.test(pathname);
 }
 
-export function isAdminApiPath(url: URL): boolean {
-  return url.pathname === "/admin/api"
-    || url.pathname.startsWith("/admin/api/");
+export function isAdminPath(url: URL): boolean {
+  return url.pathname === "/admin"
+    || url.pathname.startsWith("/admin/");
 }
 
 export function isPublicPreviewPath(url: URL): boolean {
@@ -60,16 +60,12 @@ export async function handleRequest(
 ): Promise<Response> {
   const url = new URL(request.url);
 
-  if (isAdminApiPath(url)) {
-    if (url.hostname !== PREVIEW_HOST) {
-      return noStoreResponse("Not Found", 404);
+  if (isAdminPath(url)) {
+    if (!env.CMS) {
+      return noStoreResponse("CMS unavailable", 503);
     }
 
-    if (!env.CMS_API) {
-      return noStoreResponse("CMS API unavailable", 503);
-    }
-
-    return env.CMS_API.fetch(request);
+    return env.CMS.fetch(request);
   }
 
   if (isPublicPreviewPath(url)) {
