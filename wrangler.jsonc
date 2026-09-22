@@ -20,6 +20,10 @@
     {
       "pattern": "sasanoha.dev",
       "custom_domain": true
+    },
+    {
+      "pattern": "preview.sasanoha.dev",
+      "custom_domain": true
     }
   ]
 }
