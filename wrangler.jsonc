@@ -10,6 +10,12 @@
     "run_worker_first": true,
     "not_found_handling": "404-page"
   },
+  "services": [
+    {
+      "binding": "CMS_API",
+      "service": "sasanoha-cms-api"
+    }
+  ],
   "routes": [
     {
       "pattern": "sasanoha.dev",
