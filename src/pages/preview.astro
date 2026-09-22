@@ -2,6 +2,14 @@
 import PreviewPanel from "../components/PreviewPanel.vue";
 import "../styles/global.scss";
 
+const configuredActionEndpoint =
+  import.meta.env.PUBLIC_SASANOHA_ACTION_ENDPOINT;
+const actionEndpoint =
+  typeof configuredActionEndpoint === "string"
+  && configuredActionEndpoint.trim()
+    ? configuredActionEndpoint.trim()
+    : undefined;
+
 const work = {
   description: "公開前の制作物",
   producedAt: "2026-09-18",
@@ -45,7 +53,8 @@ const work = {
       producedAt={work.producedAt}
       createdAt={work.createdAt}
       publishAt={work.publishAt}
-      referenceMode={true}
+      actionEndpoint={actionEndpoint}
+      referenceMode={!actionEndpoint}
     />
   </body>
 </html>
