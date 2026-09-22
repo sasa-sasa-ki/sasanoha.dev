@@ -12,7 +12,12 @@
     "test": "node --test test/*.test.ts",
     "build": "npm run check && astro build",
     "preview": "astro preview",
-    "deploy:dry-run": "npm run build && wrangler deploy --dry-run"
+    "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
+    "api:dev": "wrangler dev --config wrangler.api.jsonc",
+    "api:d1:migrate:local": "wrangler d1 migrations apply sasanoha-dev-cms --local --config wrangler.api.jsonc",
+    "api:d1:migrate:remote": "node scripts/verify-api-provisioning.mjs d1 && wrangler d1 migrations apply sasanoha-dev-cms --remote --config wrangler.api.jsonc",
+    "api:deploy:dry-run": "wrangler deploy --dry-run --config wrangler.api.jsonc",
+    "api:deploy": "node scripts/verify-api-provisioning.mjs deploy && wrangler deploy --config wrangler.api.jsonc"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
