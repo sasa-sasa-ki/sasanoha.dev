@@ -29,6 +29,8 @@ Access設定後に次をroutesへ追加します。
 
 Workerはすでに `preview.sasanoha.dev` を認識し、通常の公開indexではなくAstroの `/preview/` assetへ切り替えられます。
 
+さらに `/admin/api/*` はpreview hostnameの時だけ `CMS_API` Service Bindingへ転送します。public hostnameから同じpathへアクセスしても404になり、bindingがまだ設定されていないpreview環境では503でfail closedします。
+
 ## Preview panel
 
 preview pageではサイト本文より上のz-indexに固定side panelを表示します。
@@ -40,6 +42,12 @@ preview pageではサイト本文より上のz-indexに固定side panelを表示
 - 将来CMS API接続後、同じpanelから公開・下書き・保管を操作
 
 現在のreference siteでは、API未接続でも **reference mode** として公開・下書き・保管をブラウザ内だけで切り替えられます。これはUI検証用で永続化されず、再読み込みするとfixtureへ戻ります。
+
+`PUBLIC_SASANOHA_ACTION_ENDPOINT` にsame-origin action pathを指定するとAPI modeへ切り替わります。reference fixtureでの例は次です。
+
+```env
+PUBLIC_SASANOHA_ACTION_ENDPOINT=/admin/api/items/reference-work/action
+```
 
 実CMS接続時はpanelへaction endpointを渡し、次の最小contractを利用します。
 
@@ -57,3 +65,32 @@ Content-Type: application/json
 ```
 
 actionの状態遷移自体はsasanohaCMS Core側へ集約し、reference site独自のCMSロジックを増やさない方針です。
+
+
+## Cloudflare activation order
+
+誤公開と壊れたbindingを避けるため、実接続は次の順序に固定します。
+
+1. sasanohaCMS側でD1 `sasanoha-cms` を作成
+2. D1 migrationをremoteへ適用
+3. `sasanoha-cms-api` Workerをdeploy
+4. このsite Workerの `wrangler.jsonc` にService Bindingを追加
+5. preview buildで `PUBLIC_SASANOHA_ACTION_ENDPOINT` を設定
+6. Cloudflare Accessで `preview.sasanoha.dev` を保護
+7. 最後にpreview Custom Domainを有効化
+8. public / preview / APIのsmoke test後にreference modeを不要なら外す
+
+Service Binding設定:
+
+```jsonc
+{
+  "services": [
+    {
+      "binding": "CMS_API",
+      "service": "sasanoha-cms-api"
+    }
+  ]
+}
+```
+
+現時点のrepositoryでは、Cloudflare resourceが存在しない状態でもdry-run CIを成立させるため、このbindingとpreview routeはまだ `wrangler.jsonc` に有効化していません。
