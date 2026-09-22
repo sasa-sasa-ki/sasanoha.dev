@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 import {
+  fetchPreviewItem,
   nextPreviewStatus,
   sendPreviewAction,
   type PreviewAction,
+  type PreviewItem,
   type PreviewStatus,
 } from "../lib/preview-action.ts";
 
@@ -13,14 +15,22 @@ const props = defineProps<{
   producedAt: string;
   createdAt: string;
   publishAt?: string;
-  actionEndpoint?: string;
+  itemId?: string;
+  apiBaseUrl?: string;
+  connectOnPreviewHost?: boolean;
   referenceMode?: boolean;
 }>();
 
 const open = ref(false);
+const mounted = ref(false);
 const currentStatus = ref<PreviewStatus>(props.status);
+const currentCreatedAt = ref(props.createdAt);
+const currentPublishAt = ref<string | undefined>(props.publishAt);
 const pending = ref(false);
 const message = ref("");
+const apiBase = ref<string | null>(null);
+const apiAttempted = ref(false);
+const apiConnected = ref(false);
 
 const labels = {
   draft: "下書き",
@@ -29,16 +39,63 @@ const labels = {
   archived: "保管",
 } as const;
 
-const actionsEnabled = computed(
-  () => Boolean(props.actionEndpoint || props.referenceMode),
-);
+const actionsEnabled = computed(() => {
+  if (!mounted.value) return false;
+  if (apiBase.value) return true;
+  if (apiAttempted.value) return false;
+  return props.referenceMode === true;
+});
 
 const displayedPublishAt = computed(
   () =>
     currentStatus.value === "scheduled"
-      ? (props.publishAt ?? "未設定")
+      ? (currentPublishAt.value ?? "未設定")
       : "未設定",
 );
+
+function applyApiItem(item: PreviewItem): void {
+  currentStatus.value = item.status;
+  currentCreatedAt.value = item.createdAt;
+  currentPublishAt.value = item.publishAt;
+}
+
+function runtimeApiBase(): string | null {
+  if (props.apiBaseUrl) return props.apiBaseUrl;
+  if (
+    props.connectOnPreviewHost
+    && props.itemId
+    && window.location.hostname === "preview.sasanoha.dev"
+  ) {
+    return `/admin/api/items/${encodeURIComponent(props.itemId)}`;
+  }
+  return null;
+}
+
+onMounted(async () => {
+  mounted.value = true;
+
+  const base = runtimeApiBase();
+  if (!base) return;
+
+  apiAttempted.value = true;
+  pending.value = true;
+
+  try {
+    const item = await fetchPreviewItem(base);
+    apiBase.value = base;
+    apiConnected.value = true;
+    applyApiItem(item);
+    message.value = "CMS APIとD1へ接続しました。";
+  } catch (error) {
+    apiConnected.value = false;
+    message.value =
+      error instanceof Error
+        ? `CMS API接続に失敗しました: ${error.message}`
+        : "CMS API接続に失敗しました。";
+  } finally {
+    pending.value = false;
+  }
+});
 
 async function runAction(action: PreviewAction): Promise<void> {
   if (!actionsEnabled.value || pending.value) return;
@@ -47,14 +104,20 @@ async function runAction(action: PreviewAction): Promise<void> {
   message.value = "";
 
   try {
-    if (props.actionEndpoint) {
-      const result = await sendPreviewAction(props.actionEndpoint, action);
-      currentStatus.value = result.status;
-      message.value = "CMSへ反映しました。";
+    if (apiBase.value) {
+      const item = await sendPreviewAction(
+        `${apiBase.value}/action`,
+        action,
+      );
+      applyApiItem(item);
+      message.value = "D1へ反映しました。";
       return;
     }
 
     currentStatus.value = nextPreviewStatus(currentStatus.value, action);
+    if (action !== "scheduled") {
+      currentPublishAt.value = undefined;
+    }
     message.value =
       "reference modeのため、この画面上だけで状態を切り替えています。再読み込みすると戻ります。";
   } catch (error) {
@@ -98,7 +161,7 @@ async function runAction(action: PreviewAction): Promise<void> {
       </div>
       <div>
         <dt>CMS作成日時</dt>
-        <dd>{{ props.createdAt }}</dd>
+        <dd>{{ currentCreatedAt }}</dd>
       </div>
       <div>
         <dt>公開予約</dt>
@@ -136,11 +199,14 @@ async function runAction(action: PreviewAction): Promise<void> {
     </p>
 
     <p class="note">
-      <template v-if="props.actionEndpoint">
-        CMS APIへ接続しています。
+      <template v-if="apiConnected">
+        Cloudflare Access認証済みのCMS API Workerを経由して、D1へ接続しています。
+      </template>
+      <template v-else-if="apiAttempted">
+        本番PreviewではAPI接続失敗時にreference modeへ自動fallbackせず、操作を停止します。
       </template>
       <template v-else-if="props.referenceMode">
-        現在はreference modeです。操作は永続化せず、API接続時も同じaction語彙を利用します。
+        現在はreference modeです。操作は永続化せず、Preview本番では同じUIが実APIへ切り替わります。
       </template>
       <template v-else>
         CMS API未接続のため操作は無効です。
@@ -205,6 +271,7 @@ async function runAction(action: PreviewAction): Promise<void> {
 
     dd {
       margin: 0;
+      overflow-wrap: anywhere;
     }
   }
 
