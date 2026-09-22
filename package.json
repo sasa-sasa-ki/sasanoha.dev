@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "check": "astro check && npm test",
+    "check": "astro check && tsc -p tsconfig.worker.json && npm test",
     "test": "node --test test/*.test.ts",
     "build": "npm run check && astro build",
     "preview": "astro preview",
