@@ -94,11 +94,11 @@ async function runAction(action: PreviewAction): Promise<void> {
       </div>
       <div>
         <dt>制作日時</dt>
-        <dd>{{ producedAt }}</dd>
+        <dd>{{ props.producedAt }}</dd>
       </div>
       <div>
         <dt>CMS作成日時</dt>
-        <dd>{{ createdAt }}</dd>
+        <dd>{{ props.createdAt }}</dd>
       </div>
       <div>
         <dt>公開予約</dt>
@@ -136,10 +136,10 @@ async function runAction(action: PreviewAction): Promise<void> {
     </p>
 
     <p class="note">
-      <template v-if="actionEndpoint">
+      <template v-if="props.actionEndpoint">
         CMS APIへ接続しています。
       </template>
-      <template v-else-if="referenceMode">
+      <template v-else-if="props.referenceMode">
         現在はreference modeです。操作は永続化せず、API接続時も同じaction語彙を利用します。
       </template>
       <template v-else>
