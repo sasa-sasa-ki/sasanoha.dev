@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   assetPathForRequest,
+  isPublicPreviewPath,
   PREVIEW_HOST,
 } from "../worker/index.ts";
 
@@ -31,5 +32,18 @@ test("preview hostname keeps Astro assets unchanged", () => {
       new URL(`https://${PREVIEW_HOST}/_astro/PreviewPanel.js`),
     ),
     "/_astro/PreviewPanel.js",
+  );
+});
+
+
+test("public hostname blocks the internal preview asset path", () => {
+  assert.equal(
+    isPublicPreviewPath(new URL("https://sasanoha.dev/preview/")),
+    true,
+  );
+
+  assert.equal(
+    isPublicPreviewPath(new URL("https://preview.sasanoha.dev/preview/")),
+    false,
   );
 });
