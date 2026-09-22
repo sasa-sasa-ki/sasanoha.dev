@@ -12,6 +12,11 @@ export default {
 
   deployment: {
     id: "sasanoha",
+    compatibilityDate: "2026-09-22",
+    access: {
+      mode: "otp",
+      sessionDuration: "24h",
+    },
   },
 
   site: {
