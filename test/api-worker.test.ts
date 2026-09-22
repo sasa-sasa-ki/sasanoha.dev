@@ -10,6 +10,7 @@ import type {
   ItemStore,
   StoredItemState,
 } from "../worker/api/contracts.ts";
+import { D1ItemStore } from "../worker/api/d1-item-store.ts";
 
 class MemoryStore implements ItemStore {
   state: StoredItemState | null = {
@@ -192,4 +193,92 @@ test("POST rejects unknown actions", async () => {
 
   assert.equal(response.status, 400);
   assert.equal(store.state?.status, "scheduled");
+});
+
+
+class FakeD1Statement {
+  values: unknown[] = [];
+
+  constructor(
+    private readonly db: FakeD1Database,
+    private readonly sql: string,
+  ) {}
+
+  bind(...values: unknown[]): FakeD1Statement {
+    this.values = values;
+    return this;
+  }
+
+  async first<T>(): Promise<T | null> {
+    if (!this.sql.includes("SELECT") || !this.db.row) return null;
+    return this.db.row as T;
+  }
+
+  async run(): Promise<unknown> {
+    if (this.sql.includes("UPDATE") && this.db.row) {
+      this.db.row = {
+        ...this.db.row,
+        status: String(this.values[0]),
+        updated_at: String(this.values[1]),
+        publish_at: null,
+        published_at:
+          this.values[2] === null
+            ? null
+            : String(this.values[2]),
+      };
+      this.db.lastUpdatedBy = String(this.values[3]);
+    }
+
+    return { success: true };
+  }
+}
+
+class FakeD1Database {
+  row = {
+    id: "reference-work",
+    status: "scheduled",
+    updated_at: "2026-09-22T03:00:00.000Z",
+    publish_at: "2026-10-01T09:00:00.000Z",
+    published_at: null as string | null,
+  };
+
+  lastUpdatedBy = "";
+
+  prepare(sql: string): FakeD1Statement {
+    return new FakeD1Statement(this, sql);
+  }
+}
+
+test("D1 adapter clears schedule, records publisher and preserves publication history", async () => {
+  const db = new FakeD1Database();
+  const store = new D1ItemStore(db);
+
+  const published = await store.applyAction(
+    "reference-work",
+    "publish",
+    "editor@example.com",
+    new Date("2026-09-22T05:00:00.000Z"),
+  );
+
+  assert.equal(published?.status, "published");
+  assert.equal(published?.publishAt, undefined);
+  assert.equal(
+    published?.publishedAt,
+    "2026-09-22T05:00:00.000Z",
+  );
+  assert.equal(db.lastUpdatedBy, "editor@example.com");
+
+  const draft = await store.applyAction(
+    "reference-work",
+    "draft",
+    "editor@example.com",
+    new Date("2026-09-22T06:00:00.000Z"),
+  );
+
+  assert.equal(draft?.status, "draft");
+  assert.equal(
+    draft?.publishedAt,
+    "2026-09-22T05:00:00.000Z",
+  );
+  assert.equal(db.row.publish_at, null);
 });
