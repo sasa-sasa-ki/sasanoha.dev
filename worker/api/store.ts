@@ -114,56 +114,66 @@ async function readRow(
 }
 
 export function createD1ItemStore(db: D1DatabaseLike): ItemStore {
+  const applyAction = async (
+    id: string,
+    action: CmsItemAction,
+    now = new Date(),
+  ): Promise<CmsItem | null> => {
+    const row = await readRow(db, id);
+    if (!row) return null;
+
+    const timestamp = now.toISOString();
+    const next = actionState(row, action, timestamp);
+
+    const result = await db
+      .prepare(`
+        UPDATE cms_items
+        SET
+          status = ?,
+          updated_at = ?,
+          publish_at = ?,
+          published_at = ?,
+          revision = revision + 1
+        WHERE id = ? AND revision = ?
+      `)
+      .bind(
+        next.status,
+        timestamp,
+        next.publishAt,
+        next.publishedAt,
+        id,
+        row.revision,
+      )
+      .run();
+
+    if (result.meta?.changes !== 1) {
+      throw new Error("cms item update conflict");
+    }
+
+    const updated = await readRow(db, id);
+    return updated ? toItem(updated) : null;
+  };
+
+  const get = async (
+    id: string,
+    now = new Date(),
+  ): Promise<CmsItem | null> => {
+    const row = await readRow(db, id);
+    if (!row) return null;
+
+    if (
+      row.status === "scheduled"
+      && row.publish_at
+      && Date.parse(row.publish_at) <= now.getTime()
+    ) {
+      return applyAction(id, "publish", now);
+    }
+
+    return toItem(row);
+  };
+
   return {
-    async get(id, now = new Date()) {
-      const row = await readRow(db, id);
-      if (!row) return null;
-
-      if (
-        row.status === "scheduled"
-        && row.publish_at
-        && Date.parse(row.publish_at) <= now.getTime()
-      ) {
-        return this.applyAction(id, "publish", now);
-      }
-
-      return toItem(row);
-    },
-
-    async applyAction(id, action, now = new Date()) {
-      const row = await readRow(db, id);
-      if (!row) return null;
-
-      const timestamp = now.toISOString();
-      const next = actionState(row, action, timestamp);
-
-      const result = await db
-        .prepare(`
-          UPDATE cms_items
-          SET
-            status = ?,
-            updated_at = ?,
-            publish_at = ?,
-            published_at = ?,
-            revision = revision + 1
-          WHERE id = ? AND revision = ?
-        `)
-        .bind(
-          next.status,
-          timestamp,
-          next.publishAt,
-          next.publishedAt,
-          id,
-          row.revision,
-        )
-        .run();
-
-      if (result.meta?.changes !== 1) {
-        throw new Error("cms item update conflict");
-      }
-
-      const updated = await readRow(db, id);
-      return updated ? toItem(updated) : null;
-    },
+    get,
+    applyAction,
   };
 }
