@@ -39,5 +39,21 @@ preview pageではサイト本文より上のz-indexに固定side panelを表示
 - item status / 制作日時 / CMS作成日時 / 公開予約を確認
 - 将来CMS API接続後、同じpanelから公開・下書き・保管を操作
 
-現在、操作buttonはreference siteではdisabledです。
-実際の状態変更はsasanohaCMS private playground側ですでに動作します。
+現在のreference siteでは、API未接続でも **reference mode** として公開・下書き・保管をブラウザ内だけで切り替えられます。これはUI検証用で永続化されず、再読み込みするとfixtureへ戻ります。
+
+実CMS接続時はpanelへaction endpointを渡し、次の最小contractを利用します。
+
+```http
+POST /admin/api/items/<item-id>/action
+Content-Type: application/json
+
+{ "action": "publish" | "draft" | "archive" }
+```
+
+成功時はCMS側で確定した状態を返します。
+
+```json
+{ "status": "draft" | "scheduled" | "published" | "archived" }
+```
+
+actionの状態遷移自体はsasanohaCMS Core側へ集約し、reference site独自のCMSロジックを増やさない方針です。
