@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   assetPathForRequest,
+  isPreviewHostEnabled,
   isPublicPreviewPath,
   PREVIEW_HOST,
 } from "../worker/index.ts";
@@ -45,5 +46,17 @@ test("public hostname blocks the internal preview asset path", () => {
   assert.equal(
     isPublicPreviewPath(new URL("https://preview.sasanoha.dev/preview/")),
     false,
+  );
+});
+
+test("preview hostname fails closed until explicitly enabled", () => {
+  const url = new URL(`https://${PREVIEW_HOST}/`);
+
+  assert.equal(isPreviewHostEnabled(url, undefined), false);
+  assert.equal(isPreviewHostEnabled(url, "false"), false);
+  assert.equal(isPreviewHostEnabled(url, "true"), true);
+  assert.equal(
+    isPreviewHostEnabled(new URL("https://sasanoha.dev/"), undefined),
+    true,
   );
 });
