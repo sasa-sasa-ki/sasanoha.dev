@@ -4,6 +4,9 @@
   "compatibility_date": "2026-09-22",
   "main": "./worker/index.ts",
   "workers_dev": false,
+  "vars": {
+    "PREVIEW_ENABLED": "false"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -13,6 +16,10 @@
   "routes": [
     {
       "pattern": "sasanoha.dev",
+      "custom_domain": true
+    },
+    {
+      "pattern": "preview.sasanoha.dev",
       "custom_domain": true
     }
   ]
