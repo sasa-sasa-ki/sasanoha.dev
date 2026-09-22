@@ -34,3 +34,12 @@ npm run check
 npm run dev
 npm run build
 ```
+
+
+## CMS API reference topology
+
+D1永続化・Cloudflare Access・preview専用API Workerの構成とprovision手順は
+[docs/cms-api.md](docs/cms-api.md) にまとめています。
+
+現在のremote Cloudflare resourceはまだ自動provisionしていません。
+repository側はfail-closedな実装・migration・Wrangler configまでを保持します。
