@@ -13,7 +13,12 @@
     "build": "npm run check && astro build",
     "preview": "astro preview",
     "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
-    "smoke:preview": "node scripts/smoke-preview.mjs"
+    "smoke:preview": "node scripts/smoke-preview.mjs",
+    "cms:apply": "sasanoha apply",
+    "cms:plan": "sasanoha deploy --plan",
+    "cms:deploy": "sasanoha deploy --yes",
+    "deploy:site": "npm run build && wrangler deploy",
+    "deploy": "npm run cms:apply && npm run cms:deploy && npm run deploy:site"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.1",
